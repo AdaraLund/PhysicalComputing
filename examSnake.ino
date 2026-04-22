@@ -1,16 +1,28 @@
-int leds = 13;
-int echoPin = 3;
+int leds = 13; // attached pin to led
+int echoPin = 3; // attached pin to dist sensor
 int trigPin = 2;
-int inpin = 9;
-int button = 0;
-int buttonActive = 0;
-bool distTrigger;
-#include <Servo.h>
+int inpin = 9; // attached pin for our button
+int button = 0; // button clicked or not
+int buttonActive = 0;  // variable for if button is active
+int distTrigger = 0; // variable for if the distance sensor is trigged
+#include <Servo.h> // including the servo library
 Servo myservo;  // create servo object to control a servo
 int pos = 0;    // variable to store the servo position
 
-long duration;
-int distance;
+long duration; // variable for distance to element with sensor 
+int distance; // variable for distance to element with sensor
+
+
+/*
+Current bugs;
+knappen er svær at klikke
+Man kan ikke afbryde et aktivt warning
+
+
+Mulige løsninger;
+lav boolean på warning? Så kan man skrive noget med at hvad end den gør, gør det omvendte? 
+https://docs.arduino.cc/language-reference/en/variables/data-types/bool/
+*/
 
 void setup() {
   pinMode(trigPin, OUTPUT);
@@ -27,15 +39,15 @@ void loop() {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
+  duration = pulseIn(echoPin, HIGH); //reads input from sensor
+  distance = duration * 0.034 / 2; // calculation for distance
 
-  Serial.print("Distance: ");
+  Serial.print("Distance: "); // serial prints our distance with sensor
   Serial.print(distance);
   Serial.println("cm");
   delay(100);
 
-  button = digitalRead(inpin);
+  button = digitalRead(inpin); // reads if button is pressed or not
 
   if ((buttonActive == 1) && (button == LOW)) {         // If the button has been activated prev. and is pressed now, do
     buttonActive = 0;                                   // put the button as not active
@@ -50,7 +62,16 @@ void loop() {
   } else if ((distance < 20) && (buttonActive == 0)) {  // if the distance is less than 20 and button is not active
     noWarning();                                        // stop warning signs
 
-  } else if (distance < 20) {  //if distance is less than 20
+  } else if ((distance < 20) && (distTrigger == 1) && (buttonActive == 1)){ // dont know if its button == low or buttonActive == 1
+  noWarning(); // attempting checking if the dist is triggered, and if triggered able to untrigger
+  distTrigger = 0;
+  } else{ // if none of the above, no warning
+    noWarning();
+  }
+  
+}
+
+  /*else if (distance < 20) {  //if distance is less than 20
     warning();                 // start warning
     buttonActive = 1;          //put button to active?
 
@@ -61,16 +82,18 @@ void loop() {
   } else {
     noWarning();
   }
-}
+  */
+
 
 int warning() {              // our warning
-  distTrigger = true;        // sets distance trigger to on
+  distTrigger = 1;        // sets distance trigger to on
   digitalWrite(leds, HIGH);  // turns on all leds
   tailRattle();              // calls tail rattling function
+
 }
 
 int noWarning() {           // our turn off from warning
-  distTrigger = false;      // distance trigger to off
+  distTrigger = 0;      // distance trigger to off
   digitalWrite(leds, LOW);  //turns leds off
   pos = 100;                // sets servo pos
   myservo.write(pos);       // sets servo to pos
